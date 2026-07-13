@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8913eccb81247b4ebaba664129c2620, type: 3}
+  m_Name: DB
+  m_EditorClassIdentifier: Assembly-CSharp::DB
+  projectableMaterial: {fileID: 2100000, guid: 56dccb04c6b588c439578f7b8eb4b8fd, type: 2}
+  projectionMaterial: {fileID: 2100000, guid: e316c4537ad288a4da2a4fc5f706e17f, type: 2}
+  solidProjectionMaterial: {fileID: 2100000, guid: ef16970cb63b0644fa4ff45c8f296c80, type: 2}
+  rigidProjectionMaterial: {fileID: 2100000, guid: 2d9fd2dbca0bd6149964f8725cea1902, type: 2}
+  cassetPrefab: {fileID: 7777018960502426595, guid: 7ec82272d4110b24cab26b04da9b9263, type: 3}
