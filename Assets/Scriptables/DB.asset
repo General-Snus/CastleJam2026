@@ -16,4 +16,15 @@ MonoBehaviour:
   projectionMaterial: {fileID: 2100000, guid: e316c4537ad288a4da2a4fc5f706e17f, type: 2}
   solidProjectionMaterial: {fileID: 2100000, guid: ef16970cb63b0644fa4ff45c8f296c80, type: 2}
   rigidProjectionMaterial: {fileID: 2100000, guid: 2d9fd2dbca0bd6149964f8725cea1902, type: 2}
+  lockedMaterial: {fileID: 2100000, guid: f61b1998be8773f419db36665a854e93, type: 2}
+  unLockedMaterial: {fileID: 2100000, guid: a5e500a89b2481a4f8bb28e51a72d0f0, type: 2}
+  UI_projectableMaterial: {fileID: 2100000, guid: 8c3e65567271b9c4490ed150270f46d7, type: 2}
+  UI_projectionMaterial: {fileID: 2100000, guid: 4ec7bd7e419aec046b832a30e69e18f1, type: 2}
+  UI_solidProjectionMaterial: {fileID: 2100000, guid: b15e5d904f29301429c005614c41c3f9, type: 2}
+  UI_rigidProjectionMaterial: {fileID: 2100000, guid: d20f96b990611b043a0d9678e5c94168, type: 2}
+  emptyImage: {fileID: 21300000, guid: df5a3fa1ed037204ea951501580051ce, type: 3}
+  projectionImage: {fileID: 21300000, guid: df5a3fa1ed037204ea951501580051ce, type: 3}
+  solidImage: {fileID: 21300000, guid: df5a3fa1ed037204ea951501580051ce, type: 3}
+  rigidImage: {fileID: 21300000, guid: df5a3fa1ed037204ea951501580051ce, type: 3}
   cassetPrefab: {fileID: 7777018960502426595, guid: 7ec82272d4110b24cab26b04da9b9263, type: 3}
+  projectable: {fileID: 8310523531440105056, guid: 6bb915c4816c4ea4d95b83e3df47e40b, type: 3}

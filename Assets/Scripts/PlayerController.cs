@@ -5,10 +5,10 @@ using UnityEngine.InputSystem;
 public class PlayerController : MonoBehaviour, CastleInputActions.IPlayerActions
 {
     public static PlayerController instance;
-    public UIInventory uIInventory;
+    public UIInventory uiInventory;
+    public UIInputCassetMenu uiCassetMenu;
 
-    public Casset? currentSelectedCasset => selectedCasset < 0 || selectedCasset >= cassetInventory.Count ? null : cassetInventory[selectedCasset];
-    public List<Casset> cassetInventory = new();
+    public Casset currentlyHeldCasset;
     public const int playerInventorySize = 3;
     public float moveSpeed = 2;
     public float rotateSpeed = 10;
@@ -16,14 +16,16 @@ public class PlayerController : MonoBehaviour, CastleInputActions.IPlayerActions
     [SerializeField] Camera camera;
     [SerializeField] float upperCameraRotation = 75;
     [SerializeField] float lowerCameraRotation = -75;
+    [SerializeField] float lowerCameraFoW = 25;
+    [SerializeField] float upperCameraFoW = 80;
     [SerializeField] Rigidbody rb;
     [SerializeField] CharacterController cc;
     [SerializeField] GameObject cameraLayout;
 
-    int selectedCasset = 0;
     public float interactDistance = 2;
     public float initialJumpvelocity = 2.5f;
     float startMovespeed = 10;
+    float startFow = 10;
     CastleInputActions inputActions;
     CastleInputActions.PlayerActions playerActions;
     Vector3 moveDirection;
@@ -42,13 +44,14 @@ public class PlayerController : MonoBehaviour, CastleInputActions.IPlayerActions
         playerActions = inputActions.Player;
         playerActions.SetCallbacks(this);
         startMovespeed = moveSpeed;
+        startFow = camera.fieldOfView;
         rb = GetComponent<Rigidbody>();
         cc = GetComponent<CharacterController>();
     }
 
     void Start()
     {
-        uIInventory.UpdateUI(this);
+        uiInventory.UpdateUI(this);
     }
 
     void OnDestroy()
@@ -67,6 +70,8 @@ public class PlayerController : MonoBehaviour, CastleInputActions.IPlayerActions
     }
 
     float gravity = 0;
+
+    Interactable currentHover;
     void Update()
     {
         if (cc.isGrounded && gravity < 0) { gravity = 0; }
@@ -78,6 +83,32 @@ public class PlayerController : MonoBehaviour, CastleInputActions.IPlayerActions
         movement.y = gravity;
 
         cc.Move(moveSpeed * movement * Time.deltaTime);
+
+
+        var ray = camera.ViewportPointToRay(Vector3.one * .5f);
+        var layerMask = 1 << LayerMask.NameToLayer("Interactable");
+        if (!Physics.Raycast(
+            ray,
+            out var hitInfo,
+            maxDistance: interactDistance,
+            layerMask
+            ))
+        {
+            uiCassetMenu.gameObject.SetActive(false);
+            return;
+        }
+
+        if (hitInfo.collider.gameObject.TryGetComponent<TripodController>(out var tripod))
+        {
+            currentHover = tripod;
+            uiCassetMenu.gameObject.SetActive(true);
+        }
+
+        if (hitInfo.collider.gameObject.TryGetComponent<CassetContainer>(out var cassetContainer))
+        {
+            uiCassetMenu.gameObject.SetActive(false);
+            currentHover = tripod;
+        }
     }
 
     public void DeactiveCamera()
@@ -142,7 +173,7 @@ public class PlayerController : MonoBehaviour, CastleInputActions.IPlayerActions
         if (hitInfo.collider.gameObject.TryGetComponent<CassetContainer>(out var cassetContainer))
         {
             cassetContainer.Interact(this);
-            uIInventory.UpdateUI(this);
+            uiInventory.UpdateUI(this);
         }
 
         Debug.Log($"Interacted with {hitInfo.collider.gameObject}");
@@ -182,14 +213,10 @@ public class PlayerController : MonoBehaviour, CastleInputActions.IPlayerActions
     public void OnTakePhotograph(InputAction.CallbackContext context)
     {
         if (!captureCameraActive) { return; }
-        for (int i = 0; i < cassetInventory.Count; i++)
+        if (currentlyHeldCasset is ProjectionCasset asset)
         {
-            if (cassetInventory[i] is ProjectionCasset asset)
-            {
-                asset.captureToProject = Capture.CaptureWithCamera(camera);
-                cassetInventory[i] = asset;
-                return;
-            }
+            asset.captureToProject = Capture.CaptureWithCamera(camera);
+            return;
         }
     }
 
@@ -197,6 +224,10 @@ public class PlayerController : MonoBehaviour, CastleInputActions.IPlayerActions
     {
         captureCameraActive = context.performed;
         cameraLayout.SetActive(captureCameraActive);
+        if (!captureCameraActive)
+        {
+            camera.fieldOfView = startFow;
+        }
     }
 
     public void OnReset(InputAction.CallbackContext context)
@@ -206,20 +237,64 @@ public class PlayerController : MonoBehaviour, CastleInputActions.IPlayerActions
 
     public void OnCassetSelection1(InputAction.CallbackContext context)
     {
-        selectedCasset = cassetInventory.Count < 1 ? cassetInventory.Count - 1 : 0;
-        uIInventory.UpdateUI(this);
+        uiInventory.UpdateUI(this);
+        if (currentHover == null) { return; }
+        if (currentHover is TripodController tripod)
+        {
+            tripod.switchCassets(this, 0);
+            uiCassetMenu.UpdateUI(this, tripod);
+            uiInventory.UpdateUI(this);
+        }
+
     }
 
     public void OnCassetSelection2(InputAction.CallbackContext context)
     {
-        selectedCasset = cassetInventory.Count < 2 ? cassetInventory.Count - 1 : 1;
-        uIInventory.UpdateUI(this);
+        uiInventory.UpdateUI(this);
+        if (currentHover == null) { return; }
+        if (currentHover is TripodController tripod)
+        {
+            tripod.switchCassets(this, 1);
+            uiCassetMenu.UpdateUI(this, tripod);
+            uiInventory.UpdateUI(this);
+        }
     }
 
     public void OnCassetSelection3(InputAction.CallbackContext context)
     {
-        selectedCasset = cassetInventory.Count < 3 ? cassetInventory.Count - 1 : 2;
-        uIInventory.UpdateUI(this);
+        uiInventory.UpdateUI(this);
+        if (currentHover == null) { return; }
+        if (currentHover is TripodController tripod)
+        {
+            tripod.switchCassets(this, 2);
+            uiCassetMenu.UpdateUI(this, tripod);
+            uiInventory.UpdateUI(this);
+        }
+    }
+
+
+    public void OnZoom(InputAction.CallbackContext context)
+    {
+        if (!context.performed) { return; }
+        if (captureCameraActive)
+        {
+            camera.fieldOfView += context.ReadValue<Vector2>().y * Time.deltaTime * 25;
+            camera.fieldOfView = Mathf.Clamp(camera.fieldOfView, lowerCameraFoW, upperCameraFoW);
+        }
+    }
+
+
+    void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        if (hit.gameObject.TryGetComponent<KillCollider>(out var _))
+        {
+            SceneQuery.instance.ReloadScene();
+        }
+
+        if (hit.gameObject.CompareTag("Goal"))
+        {
+            SceneQuery.instance.NextScene();
+        }
 
     }
 }

@@ -11,8 +11,8 @@ public class CassetContainer : MonoBehaviour, Interactable
 
     public void Interact(PlayerController controller)
     {
-        if (controller.cassetInventory.Count > PlayerController.playerInventorySize) { return; }
-        controller.cassetInventory.Add(Instantiate(casset));
+        if (controller.currentlyHeldCasset != null) { return; }
+        controller.currentlyHeldCasset = Instantiate(casset);
         Destroy(this.gameObject);
     }
 
@@ -42,5 +42,9 @@ public class CassetContainer : MonoBehaviour, Interactable
     void Update()
     {
         transform.Rotate(Vector3.up, Time.deltaTime * 8);
+    }
+
+    public void OnHover(PlayerController controller)
+    {
     }
 }

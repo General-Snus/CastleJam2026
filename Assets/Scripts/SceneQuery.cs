@@ -20,7 +20,7 @@ public class SceneQuery : MonoBehaviour
         }
 
         instance = this;
-        
+
         projectable = FindObjectsByType<Projectable>(FindObjectsInactive.Exclude);
         tripodControllers = FindObjectsByType<TripodController>(FindObjectsInactive.Exclude);
 
@@ -31,5 +31,10 @@ public class SceneQuery : MonoBehaviour
     public void ReloadScene()
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    public void NextScene()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
     }
 }

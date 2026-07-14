@@ -3,7 +3,8 @@ using UnityEngine;
 [RequireComponent(typeof(MeshRenderer))]
 
 [RequireComponent(typeof(Rigidbody))]
-[RequireComponent(typeof(BoxCollider))]
+[RequireComponent(typeof(MeshCollider))]
+[RequireComponent(typeof(MeshFilter))]
 public class Projectable : MonoBehaviour
 {
     public enum Type
@@ -38,15 +39,15 @@ public class Projectable : MonoBehaviour
             isDirty = true;
         }
     }
-    public bool IsKinematic
+    public bool IsRigid
     {
         get
         {
-            return _isKinematic;
+            return _isRigid;
         }
         set
         {
-            _isKinematic = value;
+            _isRigid = value;
             isDirty = true;
         }
     }
@@ -55,21 +56,33 @@ public class Projectable : MonoBehaviour
 
     [SerializeField] bool _isProjected = false;
     [SerializeField] bool _isSolid = false;
-    [SerializeField] bool _isKinematic = false;
+    [SerializeField] bool _isRigid = false;
 
 
 
 
 
     Rigidbody rb;
-    BoxCollider collider;
+    MeshCollider collider;
     MeshRenderer renderer;
-    public void Start()
+    public MeshFilter filter;
+    public Mesh mesh => filter.mesh;
+    public Vector3[] originalVertices;
+    public void Awake()
     {
         renderer = GetComponent<MeshRenderer>();
-        collider = GetComponent<BoxCollider>();
+        collider = GetComponent<MeshCollider>();
         rb = GetComponent<Rigidbody>();
+        filter = GetComponent<MeshFilter>();
 
+        collider.enabled = false;
+        rb.isKinematic = true;
+        collider.sharedMesh = mesh;
+
+    }
+
+    void Start()
+    {
         UpdateState();
     }
 
@@ -84,7 +97,9 @@ public class Projectable : MonoBehaviour
     void UpdateState()
     {
         collider.enabled = false;
+        collider.convex = false;
         rb.isKinematic = true;
+        collider.sharedMesh = mesh;
 
         var db = SceneQuery.instance.dB;
 
@@ -99,9 +114,10 @@ public class Projectable : MonoBehaviour
             renderer.material = db.solidProjectionMaterial;
         }
 
-        if (IsKinematic)
+        if (IsRigid)
         {
             rb.isKinematic = false;
+            collider.convex = true;
             renderer.material = db.rigidProjectionMaterial;
         }
 

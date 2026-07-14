@@ -3,24 +3,14 @@ using UnityEngine.UI;
 
 public class UIInventory : MonoBehaviour
 {
-    public GameObject UICassetPrefab;
-    public GameObject cassetInventoryParent;
+    public Button UICassetButton;
+    public TMPro.TMP_Text UICassetText;
 
     public void UpdateUI(PlayerController controller)
     {
-        for (int i = 0; i < cassetInventoryParent.transform.childCount; i++)
-        {
-            Destroy(cassetInventoryParent.transform.GetChild(i).gameObject);
-        }
-
-        foreach (var casset in controller.cassetInventory)
-        {
-            var prefab = Instantiate(UICassetPrefab, cassetInventoryParent.transform);
-            prefab.GetComponentInChildren<TMPro.TMP_Text>().text = casset.type.ToString();
-            prefab.GetComponent<Button>().onClick.AddListener(() =>
-            {
-
-            });
-        }
+        var heldType = controller.currentlyHeldCasset == null ? Projectable.Type.none : controller.currentlyHeldCasset.type;
+        UICassetButton.image.sprite = SceneQuery.instance.dB.getSprite(heldType);
+        UICassetButton.image.material = SceneQuery.instance.dB.getUIMaterial(heldType);
+        UICassetText.text = heldType.ToString();
     }
 }

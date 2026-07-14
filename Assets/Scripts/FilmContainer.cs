@@ -1,4 +1,5 @@
 using System.Collections;
+using Unity.Mathematics;
 using UnityEngine;
 
 public class CameraCassetVisual : MonoBehaviour
@@ -13,10 +14,38 @@ public class CameraCassetVisual : MonoBehaviour
         StartCoroutine(transition(type));
     }
 
+    public void initWith(Projectable.Type newType)
+    {
+        type = newType;
+        Vector3 target = targetIn.position;
+        if (newType == Projectable.Type.none)
+        {
+            target = targetOut.position;
+        }
+
+        filmObject.transform.position = target;
+
+        filmObject.enabled = true;
+        switch (newType)
+        {
+            case Projectable.Type.none:
+                filmObject.enabled = false;
+                break;
+            case Projectable.Type.projection:
+                filmObject.material = SceneQuery.instance.dB.projectionMaterial;
+                break;
+            case Projectable.Type.solid:
+                filmObject.material = SceneQuery.instance.dB.solidProjectionMaterial;
+                break;
+            case Projectable.Type.rigid:
+                filmObject.material = SceneQuery.instance.dB.rigidProjectionMaterial;
+                break;
+        }
+    }
     IEnumerator transition(Projectable.Type newType)
     {
         if (type == newType) { yield break; }
-
+        type = newType;
         Vector3 target = targetIn.position;
         bool outAndIn = type != Projectable.Type.none;
         if (newType == Projectable.Type.none)

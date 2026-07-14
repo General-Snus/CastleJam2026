@@ -164,7 +164,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe3e62df8980abe49a5f0c13ec787859, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  rotateSpeed: 10
+  rotateSpeed: 2
   camera: {fileID: 4186397298034012520}
   headYTransform: {fileID: 7293105098716850496}
   headXTransform: {fileID: 4875067087639761394}
@@ -176,8 +176,10 @@ MonoBehaviour:
   - {fileID: 5513045716104543952}
   - {fileID: 9184016193852723668}
   - {fileID: 542875484508136410}
-  upperCameraRotation: 55
-  lowerCameraRotation: -35
+  upperCameraRotation: 40
+  lowerCameraRotation: 0
+  lowerFoW: 30
+  upperFoW: 75
 --- !u!65 &6260278117356437997
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -515,14 +517,14 @@ Camera:
   serializedVersion: 2
   m_ClearFlags: 1
   m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
-  m_projectionMatrixMode: 2
+  m_projectionMatrixMode: 1
   m_GateFitMode: 1
   m_FOVAxisMode: 0
   m_Iso: 200
   m_ShutterSpeed: 0.005
   m_Aperture: 16
   m_FocusDistance: 10
-  m_FocalLength: 24
+  m_FocalLength: 23.999998
   m_BladeCount: 5
   m_Curvature: {x: 2, y: 11}
   m_BarrelClipping: 0.25
@@ -535,9 +537,9 @@ Camera:
     y: 0
     width: 1
     height: 1
-  near clip plane: 0.08
+  near clip plane: 0.2
   far clip plane: 1000
-  field of view: 53.130104
+  field of view: 53.130108
   orthographic: 0
   orthographic size: 5
   m_Depth: 0

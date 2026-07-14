@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 [System.Serializable]
 public struct Capture
@@ -8,29 +9,56 @@ public struct Capture
     [System.Serializable]
     public struct CapturedObject
     {
-        public GameObject copy;
         public Projectable projectable;
-        public Matrix4x4 cameraSpace;
+        public Mesh mesh;
     }
 
-    [SerializeField] public List<CapturedObject> viewportSpaceCopy;
-    public bool isValid => viewportSpaceCopy != null && viewportSpaceCopy.Count > 0;
+    [SerializeField] public CapturedObject capturedObject;
+    public bool isValid => capturedObject.mesh != null;
 
     public static Capture CaptureWithCamera(Camera camera)
     {
+        var planes = GeometryUtility.CalculateFrustumPlanes(camera);
         Capture capture = new()
         {
-            viewportSpaceCopy = new()
+            capturedObject = new()
         };
 
-        var planes = GeometryUtility.CalculateFrustumPlanes(camera);
-        foreach (var projectable in SceneQuery.instance.projectable)
+
+        var newMesh = new Mesh();
+        List<Vector3> newPoints = new();
+        List<int> newIndicies = new();
+        newMesh.subMeshCount = SceneQuery.instance.projectable.Length;
+        for (int i = 0; i < SceneQuery.instance.projectable.Length; i++)
         {
+            Projectable projectable = SceneQuery.instance.projectable[i];
             var insideFrustrum = GeometryUtility.TestPlanesAABB(planes, projectable.GetComponentInChildren<Collider>().bounds);
             if (!insideFrustrum) { continue; }
-            var viewspace = camera.transform.worldToLocalMatrix * projectable.transform.localToWorldMatrix;
-            capture.viewportSpaceCopy.Add(new CapturedObject { copy = projectable.gameObject, projectable = projectable, cameraSpace = viewspace });
+            var viewspace = camera.projectionMatrix * camera.transform.worldToLocalMatrix * projectable.transform.localToWorldMatrix;
+
+            var indicies = projectable.filter.mesh.GetIndices(0);
+            var meshVertices = projectable.filter.mesh.vertices;
+
+            for (int j = 0; j < meshVertices.Length; j++)
+            {
+                var vertex = meshVertices[j];
+                vertex = viewspace.MultiplyPoint(vertex);
+
+        
+
+                newPoints.Add(vertex);
+            }
+
+            for (int j = 0; j < indicies.Length; j++)
+            {
+                var index = indicies[j];
+                newIndicies.Add(index);
+            }
+            newMesh.vertices = newPoints.ToArray();
+            newMesh.SetIndices(newIndicies, MeshTopology.Triangles, i, true);
         }
+        var copy = new CapturedObject { mesh = newMesh };
+        capture.capturedObject = copy;
 
         return capture;
     }
