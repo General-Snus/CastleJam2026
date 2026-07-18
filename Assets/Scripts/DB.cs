@@ -12,6 +12,9 @@ public class DB : ScriptableObject
     public Material lockedMaterial;
     public Material unLockedMaterial;
     
+    public Material unPoweredMaterial;
+    public Material poweredMaterial;
+    
     public Material UI_projectableMaterial;
     public Material UI_projectionMaterial;
     public Material UI_solidProjectionMaterial;

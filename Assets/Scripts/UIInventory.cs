@@ -8,7 +8,7 @@ public class UIInventory : MonoBehaviour
 
     public void UpdateUI(PlayerController controller)
     {
-        var heldType = controller.currentlyHeldCasset == null ? Projectable.Type.none : controller.currentlyHeldCasset.type;
+        var heldType = controller.currentlyHeldCasset.type;
         UICassetButton.image.sprite = SceneQuery.instance.dB.getSprite(heldType);
         UICassetButton.image.material = SceneQuery.instance.dB.getUIMaterial(heldType);
         UICassetText.text = heldType.ToString();

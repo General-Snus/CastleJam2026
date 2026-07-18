@@ -11,8 +11,8 @@ public class CassetContainer : MonoBehaviour, Interactable
 
     public void Interact(PlayerController controller)
     {
-        if (controller.currentlyHeldCasset != null) { return; }
-        controller.currentlyHeldCasset = Instantiate(casset);
+        if (controller.currentlyHeldCasset.type != Projectable.Type.none) { return; }
+        controller.currentlyHeldCasset = casset;
         Destroy(this.gameObject);
     }
 

@@ -100,6 +100,7 @@ public class Projectable : MonoBehaviour
         collider.convex = false;
         rb.isKinematic = true;
         collider.sharedMesh = mesh;
+        isDirty = false;
 
         var db = SceneQuery.instance.dB;
 

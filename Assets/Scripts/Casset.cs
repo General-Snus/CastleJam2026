@@ -2,14 +2,11 @@ using Unity.VectorGraphics;
 using Unity.VisualScripting;
 using UnityEngine;
 
-public class Casset : ScriptableObject
+[System.Serializable]
+public struct Casset
 {
-    public virtual Projectable.Type type
-    {
-        get;
-    }
-    public virtual void OnEnterFrustrum(Projectable inFrustrum) { }
-    public virtual void OnPlacedInProjector(TripodController projector) { }
+    public Capture captureToProject;
+    public Projectable.Type type ;
 }
 
 public static class CassetExtensions

@@ -102,12 +102,13 @@ public class PlayerController : MonoBehaviour, CastleInputActions.IPlayerActions
         {
             currentHover = tripod;
             uiCassetMenu.gameObject.SetActive(true);
+            uiCassetMenu.UpdateUI(this, tripod);
         }
 
         if (hitInfo.collider.gameObject.TryGetComponent<CassetContainer>(out var cassetContainer))
         {
             uiCassetMenu.gameObject.SetActive(false);
-            currentHover = tripod;
+            currentHover = cassetContainer;
         }
     }
 
@@ -213,9 +214,9 @@ public class PlayerController : MonoBehaviour, CastleInputActions.IPlayerActions
     public void OnTakePhotograph(InputAction.CallbackContext context)
     {
         if (!captureCameraActive) { return; }
-        if (currentlyHeldCasset is ProjectionCasset asset)
+        if (currentlyHeldCasset.type == Projectable.Type.projection)
         {
-            asset.captureToProject = Capture.CaptureWithCamera(camera);
+            currentlyHeldCasset.captureToProject = Capture.CaptureWithCamera(camera);
             return;
         }
     }
@@ -237,6 +238,7 @@ public class PlayerController : MonoBehaviour, CastleInputActions.IPlayerActions
 
     public void OnCassetSelection1(InputAction.CallbackContext context)
     {
+        if (!context.performed) { return; }
         uiInventory.UpdateUI(this);
         if (currentHover == null) { return; }
         if (currentHover is TripodController tripod)
@@ -250,6 +252,7 @@ public class PlayerController : MonoBehaviour, CastleInputActions.IPlayerActions
 
     public void OnCassetSelection2(InputAction.CallbackContext context)
     {
+        if (!context.performed) { return; }
         uiInventory.UpdateUI(this);
         if (currentHover == null) { return; }
         if (currentHover is TripodController tripod)
@@ -262,6 +265,7 @@ public class PlayerController : MonoBehaviour, CastleInputActions.IPlayerActions
 
     public void OnCassetSelection3(InputAction.CallbackContext context)
     {
+        if (!context.performed) { return; }
         uiInventory.UpdateUI(this);
         if (currentHover == null) { return; }
         if (currentHover is TripodController tripod)

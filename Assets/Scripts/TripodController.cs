@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Linq;
+using NUnit.Framework;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -14,25 +16,36 @@ public interface Interactable
 
 public class TripodController : MonoBehaviour, Interactable, CastleInputActions.IPlayerActions
 {
+
+    [Header("Presets")]
+    public Casset[] cassets = new Casset[3];
+    public Lock[] poweredBy = new Lock[0];
+
+    [Header("Config")]
     public float rotateSpeed = 10;
+    [SerializeField] float upperCameraRotation = 55;
+    [SerializeField] float lowerCameraRotation = -35;
     public Camera camera;
     public Transform headYTransform;
     public Transform headXTransform;
-
-    public Casset[] cassets = new Casset[3];
     [SerializeField] CameraCassetVisual[] visualCassets = new CameraCassetVisual[3];
+    [SerializeField] MeshRenderer[] poweredMeshRenderers = new MeshRenderer[0];
+    [SerializeField] MeshFilter frustrumMeshFilter;
+    [SerializeField] Light frustrumSpotlight;
+    [SerializeField] ParticleSystem frustrumParticleSystem;
 
-    [SerializeField] float upperCameraRotation = 55;
-    [SerializeField] float lowerCameraRotation = -35;
-
-    bool dirtyPosition = false;
-    bool dirtyCaptures = false;
+    float startRotationSpeed = 10;
+    bool powered = true;
+    bool dirtyPosition = true;
+    bool dirtyCaptures = true;
     CastleInputActions inputActions;
     CastleInputActions.PlayerActions playerActions;
     PlayerController controller;
+    Mesh frustrumMesh;
 
     public void Interact(PlayerController playerController)
     {
+        frustrumParticleSystem.Stop();
         controller = playerController;
         controller.DeactiveCamera();
         controller.DeactiveControlls();
@@ -42,6 +55,7 @@ public class TripodController : MonoBehaviour, Interactable, CastleInputActions.
 
     public void Detach(PlayerController playerController)
     {
+        updatePowerSource();
         controller.ActiveCamera();
         controller.ActivateControlls();
         camera.enabled = false;
@@ -51,25 +65,75 @@ public class TripodController : MonoBehaviour, Interactable, CastleInputActions.
 
     void Awake()
     {
+        startRotationSpeed = rotateSpeed;
         camera.enabled = false;
         inputActions = new();
         playerActions = inputActions.Player;
+        frustrumSpotlight = GetComponentInChildren<Light>();
+        frustrumSpotlight.spotAngle = camera.fieldOfView;
         playerActions.SetCallbacks(this);
         playerActions.Disable();
+        frustrumMesh = new();
+        frustrumMesh.MarkDynamic();
     }
 
     void Start()
     {
+        foreach (var powerSource in poweredBy)
+        {
+            powerSource.onLockChanged += _ => { updatePowerSource(); };
+        }
+
+        for (int i = 0; i < cassets.Length; i++)
+        {
+            if (cassets[i].type == Projectable.Type.projection)
+            {
+                if (cassets[i].captureToProject.projectable != null)
+                {
+                    //Preset at startup should be removed
+                    foreach (var item in cassets[i].captureToProject.projectable)
+                    {
+                        item.gameObject.SetActive(false);
+                    }
+                }
+
+                cassets[i].captureToProject = Capture.CaptureProjecableWithCamera(cassets[i].captureToProject.projectable, camera);
+
+            }
+        }
+
         for (int i = 0; i < visualCassets.Length; i++)
         {
-            if (cassets[i] != null)
-            {
-                visualCassets[i].initWith(cassets[i].type);
-            }
-            else
-            {
-                visualCassets[i].initWith(Projectable.Type.none);
-            }
+            visualCassets[i].initWith(cassets[i].type);
+        }
+
+        updatePowerSource();
+    }
+
+    void updatePowerSource()
+    {
+        powered = true;
+        foreach (var item in poweredBy)
+        {
+            powered = !item.isLocked && powered;
+        }
+
+        if (powered)
+        {
+            frustrumParticleSystem.Play();
+        }
+        else
+        {
+            frustrumParticleSystem.Stop();
+        }
+
+        frustrumSpotlight.enabled = powered;
+
+        rotateSpeed = powered ? startRotationSpeed : 0;
+
+        foreach (var item in poweredMeshRenderers)
+        {
+            item.material = powered ? SceneQuery.instance.dB.poweredMaterial : SceneQuery.instance.dB.unPoweredMaterial;
         }
     }
 
@@ -107,21 +171,58 @@ public class TripodController : MonoBehaviour, Interactable, CastleInputActions.
 
             capturedObject.mesh.vertices = modifiedMeshVertices.ToArray();
             capturedObject.mesh.RecalculateBounds();
-            // Matrix4x4 newMatrix = camera.transform.localToWorldMatrix * capturedObject.cameraSpace;
-            // capturedObject.copy.transform.position = newMatrix.GetPosition();
-            //
-            // if (newMatrix.ValidTRS())
-            // {
-            //     capturedObject.copy.transform.rotation = newMatrix.rotation;
-            //     //capturedObject.copy.transform.localScale = newMatrix.lossyScale;
-            // }
-
         }
+        Vector3[] innerCorners = new Vector3[4];
+        camera.CalculateFrustumCorners(camera.rect, camera.nearClipPlane, Camera.MonoOrStereoscopicEye.Mono, innerCorners);
+
+        Vector3[] outerCorners = new Vector3[4];
+        camera.CalculateFrustumCorners(camera.rect, camera.farClipPlane, Camera.MonoOrStereoscopicEye.Mono, outerCorners);
+
+        int[] index =
+        {
+          0,1,2,
+          2,3,0,
+          0,5,1,
+          0,4,1,
+          1,5,6,
+          6,2,1,
+          2,6,7,
+          7,3,2,
+          0,4,3,
+          3,4,7
+        };
+
+        List<Vector3> vertices = new();
+        vertices.AddRange(innerCorners);
+        vertices.AddRange(outerCorners);
+        frustrumMesh.SetVertices(vertices, 0, vertices.Count);
+        frustrumMesh.SetIndices(index, MeshTopology.Triangles, 0);
+        frustrumMesh.MarkModified();
+
+        frustrumMeshFilter.mesh = frustrumMesh;
+        frustrumMeshFilter.GetComponent<MeshCollider>().sharedMesh = frustrumMesh;
+        frustrumSpotlight.spotAngle = camera.fieldOfView;
         dirtyPosition = false;
+    }
+
+    void OnDrawGizmosSelected()
+    {
+        foreach (var item in cassets)
+        {
+            if (item.type == Projectable.Type.projection && item.captureToProject.isValid)
+            {
+                if (item.captureToProject.projectable == null) { continue; }
+                foreach (var projecting in item.captureToProject.projectable)
+                {
+                    Gizmos.DrawLine(projecting.transform.position, transform.position);
+                }
+            }
+        }
     }
 
     private void InstantiateNewCaptures()
     {
+
         foreach (var capturedObject in objectWithViewportMatrix)
         {
             Destroy(capturedObject.gameObject);
@@ -130,27 +231,36 @@ public class TripodController : MonoBehaviour, Interactable, CastleInputActions.
         objectWithViewportMatrix.Clear();
 
 
+        if (!powered)
+        {
+            frustrumParticleSystem.Stop();
+            frustrumSpotlight.enabled = false;
+            return;
+        }
+
+        frustrumSpotlight.enabled = true;
+        frustrumSpotlight.color = Color.grey;
 
         foreach (var capture in cassets)
         {
-            if (capture is ProjectionCasset projectionCasset && projectionCasset.captureToProject.isValid)
+            if (capture.type == Projectable.Type.projection && capture.captureToProject.isValid)
             {
-                var captureObject = projectionCasset.captureToProject.capturedObject;
+                var capturedMesh = capture.captureToProject.capturedMesh;
 
                 var projection = Instantiate(SceneQuery.instance.dB.projectable, camera.transform);
                 var projectable = projection.GetComponent<Projectable>();
-                projectable.filter.mesh = captureObject.mesh;
-                projectable.originalVertices = captureObject.mesh.vertices;
+                projectable.filter.mesh = capturedMesh;
+                projectable.originalVertices = capturedMesh.vertices;
                 projectable.IsProjected = true;
 
                 objectWithViewportMatrix.Add(projectable);
             }
         }
 
-
+        Vector4 avgColor = default;
         foreach (var capture in cassets)
         {
-            if (capture is SolidCasset solidCasset)
+            if (capture.type == Projectable.Type.solid)
             {
                 foreach (var projection in objectWithViewportMatrix)
                 {
@@ -158,12 +268,28 @@ public class TripodController : MonoBehaviour, Interactable, CastleInputActions.
                 }
             }
 
-            if (capture is RigidCasset rigidCasset)
+            if (capture.type == Projectable.Type.rigid)
             {
                 foreach (var projection in objectWithViewportMatrix)
                 {
                     projection.IsRigid = true;
                 }
+            }
+
+
+            if (capture.type != Projectable.Type.none)
+            {
+                frustrumParticleSystem.Play();
+
+                avgColor += (Vector4)SceneQuery.instance.dB.getMaterial(capture.type).color;
+                avgColor *= .3333f;
+                avgColor.w = 1;
+                frustrumSpotlight.enabled = true;
+                frustrumSpotlight.color = avgColor;
+
+
+                var main = frustrumParticleSystem.main;
+                main.startColor = (Color)avgColor;
             }
         }
 
@@ -175,7 +301,7 @@ public class TripodController : MonoBehaviour, Interactable, CastleInputActions.
     {
         if (slot > cassets.Length) { return false; }
         if (slot < 0) { return false; }
-        if (cassets[slot] != null) { return false; }
+        if (cassets[slot].type != Projectable.Type.none) { return false; }
 
         dirtyCaptures = true;
         cassets[slot] = casset;
@@ -185,13 +311,13 @@ public class TripodController : MonoBehaviour, Interactable, CastleInputActions.
 
     public bool RemoveCasset(int slot, out Casset casset)
     {
-        casset = null;
+        casset = default;
         if (slot > cassets.Length) { return false; }
         if (slot < 0) { return false; }
 
         dirtyCaptures = true;
         casset = cassets[slot];
-        cassets[slot] = null;
+        cassets[slot] = default;
         visualCassets[slot].Transition(Projectable.Type.none);
         return true; ;
     }
@@ -286,21 +412,21 @@ public class TripodController : MonoBehaviour, Interactable, CastleInputActions.
 
     public void switchCassets(PlayerController controller, int slot)
     {
-        if (cassets[slot] == null && controller.currentlyHeldCasset != null)
+        if (cassets[slot].type == Projectable.Type.none && controller.currentlyHeldCasset.type != Projectable.Type.none)
         {
             if (AddCasset(slot, controller.currentlyHeldCasset))
             {
-                controller.currentlyHeldCasset = null;
+                controller.currentlyHeldCasset = default;
                 controller.uiInventory.UpdateUI(controller);
             }
             return;
         }
 
-        if (cassets[slot] != null)
+        if (cassets[slot].type != Projectable.Type.none)
         {
             if (RemoveCasset(slot, out var removedCasset))
             {
-                if (controller.currentlyHeldCasset == null)
+                if (controller.currentlyHeldCasset.type == Projectable.Type.none)
                 {
                     controller.currentlyHeldCasset = removedCasset;
                 }

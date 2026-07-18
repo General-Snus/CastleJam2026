@@ -18,6 +18,8 @@ MonoBehaviour:
   rigidProjectionMaterial: {fileID: 2100000, guid: 2d9fd2dbca0bd6149964f8725cea1902, type: 2}
   lockedMaterial: {fileID: 2100000, guid: f61b1998be8773f419db36665a854e93, type: 2}
   unLockedMaterial: {fileID: 2100000, guid: a5e500a89b2481a4f8bb28e51a72d0f0, type: 2}
+  unPoweredMaterial: {fileID: 2100000, guid: c57f52e88fb096a43979598abb49d919, type: 2}
+  poweredMaterial: {fileID: 2100000, guid: ef8dab938abb7f74a9736edd636552a6, type: 2}
   UI_projectableMaterial: {fileID: 2100000, guid: 8c3e65567271b9c4490ed150270f46d7, type: 2}
   UI_projectionMaterial: {fileID: 2100000, guid: 4ec7bd7e419aec046b832a30e69e18f1, type: 2}
   UI_solidProjectionMaterial: {fileID: 2100000, guid: b15e5d904f29301429c005614c41c3f9, type: 2}

@@ -136,7 +136,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1c5e12657424041498cac14b3c328e1b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CassetContainer
-  casset: {fileID: 11400000, guid: a214bb7e727ab5845b6a1a88dc9c613e, type: 2}
+  casset:
+    captureToProject:
+      projectable: []
+      capturedMesh: {fileID: 0}
+    type: 2
   renderer: {fileID: 7841750003366462655}
 --- !u!135 &3991339696782715657
 SphereCollider:

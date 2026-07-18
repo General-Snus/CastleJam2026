@@ -9,19 +9,60 @@ public struct Capture
     [System.Serializable]
     public struct CapturedObject
     {
-        public Projectable projectable;
         public Mesh mesh;
     }
 
-    [SerializeField] public CapturedObject capturedObject;
-    public bool isValid => capturedObject.mesh != null;
+    public Projectable[] projectable;
+    [SerializeField] public Mesh capturedMesh;
+    public bool isValid => capturedMesh != null;
+
+    public static Capture CaptureProjecableWithCamera(Projectable[] buildFromProjectable, Camera camera)
+    {
+        Capture capture = new()
+        {
+            capturedMesh = new()
+        };
+
+
+        var newMesh = new Mesh();
+        List<Vector3> newPoints = new();
+        List<int> newIndicies = new();
+        newMesh.subMeshCount = buildFromProjectable.Length;
+        for (int i = 0; i < buildFromProjectable.Length; i++)
+        {
+            var projectable = buildFromProjectable[i];
+            var viewspace = camera.projectionMatrix * camera.transform.worldToLocalMatrix * projectable.transform.localToWorldMatrix;
+
+            var indicies = projectable.filter.mesh.GetIndices(0);
+            var meshVertices = projectable.filter.mesh.vertices;
+
+            for (int j = 0; j < meshVertices.Length; j++)
+            {
+                var vertex = meshVertices[j];
+                vertex = viewspace.MultiplyPoint(vertex);
+                newPoints.Add(vertex);
+            }
+
+            for (int j = 0; j < indicies.Length; j++)
+            {
+                var index = indicies[j];
+                newIndicies.Add(index);
+            }
+
+            newMesh.vertices = newPoints.ToArray();
+            newMesh.SetIndices(newIndicies, MeshTopology.Triangles, i, true);
+        }
+        capture.capturedMesh = newMesh;
+        
+        return capture;
+    }
 
     public static Capture CaptureWithCamera(Camera camera)
     {
         var planes = GeometryUtility.CalculateFrustumPlanes(camera);
         Capture capture = new()
         {
-            capturedObject = new()
+            capturedMesh = new()
         };
 
 
@@ -44,7 +85,7 @@ public struct Capture
                 var vertex = meshVertices[j];
                 vertex = viewspace.MultiplyPoint(vertex);
 
-        
+
 
                 newPoints.Add(vertex);
             }
@@ -57,8 +98,7 @@ public struct Capture
             newMesh.vertices = newPoints.ToArray();
             newMesh.SetIndices(newIndicies, MeshTopology.Triangles, i, true);
         }
-        var copy = new CapturedObject { mesh = newMesh };
-        capture.capturedObject = copy;
+        capture.capturedMesh = newMesh;
 
         return capture;
     }

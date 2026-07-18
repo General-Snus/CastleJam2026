@@ -240,7 +240,7 @@ MonoBehaviour:
     waterScriptInteractionsMode: 0
     waterFullCPUSimulation: 0
     waterCausticsMeshResolution: 256
-    supportComputeThickness: 0
+    supportComputeThickness: 1
     computeThicknessResolution: 1
     computeThicknessLayerMask:
       serializedVersion: 2
